@@ -1,7 +1,6 @@
 import "dotenv/config"
 import express from "express"
 import cors from "cors"
-import connectDB from "./config/db.js"
 import contactRoutes from "./routes/contactRoutes.js"
 
 const app = express()
@@ -24,21 +23,8 @@ app.get("/", (req, res) => {
 
 const PORT = 5000
 
-const startServer = async () => {
-  try {
-    console.log("Connecting to MongoDB...")
-    await connectDB()
-    console.log("MongoDB Connected")
-
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`)
-      console.log(`EMAIL_USER: ${process.env.EMAIL_USER || "NOT SET"}`)
-    })
-  } catch (error) {
-    console.error("MongoDB Connection Error:", error.message)
-    process.exit(1)
-  }
-}
-
-startServer()
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
+  console.log(`EMAIL_USER: ${process.env.EMAIL_USER || "NOT SET"}`)
+})
 

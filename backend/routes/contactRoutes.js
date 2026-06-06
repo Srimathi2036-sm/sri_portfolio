@@ -1,12 +1,9 @@
 import express from "express"
 import nodemailer from "nodemailer"
-import axios from "axios"
-import Contact from "../models/Contact.js"
 
 const router = express.Router()
 
 const recipientEmail = "srissa2006@gmail.com"
-const whatsappNumber = "7305587479"
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -45,65 +42,19 @@ router.post("/submit", async (req, res) => {
 
     if (!hasSmtpConfig) {
       console.error("SMTP configuration missing. Set SMTP_HOST, SMTP_USER and SMTP_PASS in .env to enable email delivery.")
-      return res.status(500).json({ success: false, error: "SMTP not configured. Please set SMTP_HOST, SMTP_PORT, SMTP_USER and SMTP_PASS in your environment." })
+      return res.status(500).json({ success: false, error: "SMTP not configured" })
     }
 
-    let emailSent = false
-    let whatsappSent = false
-
-    // Send Email
-    try {
-      if (hasSmtpConfig) {
-        console.log('SMTP host=%s port=%s secure=%s', process.env.SMTP_HOST, process.env.SMTP_PORT, process.env.SMTP_SECURE)
-        await transporter.sendMail(mailOptions)
-        emailSent = true
-        console.log('✅ Email sent successfully')
-      } else {
-        console.warn('⚠️ SMTP not configured, skipping email')
-      }
-    } catch (emailErr) {
-      console.error('❌ Email send failed:', emailErr.message)
-    }
-
-    // Send WhatsApp
-    try {
-      const whatsappMessage = `New message from portfolio:\n\nName: ${name}\nEmail: ${email}\n\nMessage:\n${message}`
-      
-      // Using Ultramsg API (free tier available)
-      if (process.env.ULTRAMSG_TOKEN && process.env.ULTRAMSG_INSTANCE) {
-        await axios.post(
-          `https://api.ultramsg.com/${process.env.ULTRAMSG_INSTANCE}/messages/chat`,
-          {
-            token: process.env.ULTRAMSG_TOKEN,
-            to: `${whatsappNumber}@c.us`,
-            body: whatsappMessage,
-          }
-        )
-        whatsappSent = true
-        console.log('✅ WhatsApp message sent successfully')
-      } else {
-        console.warn('⚠️ WhatsApp API not configured. Set ULTRAMSG_TOKEN and ULTRAMSG_INSTANCE in .env')
-      }
-    } catch (whatsappErr) {
-      console.error('❌ WhatsApp send failed:', whatsappErr.message)
-    }
-
-    const newContact = new Contact({
-      name,
-      email,
-      message,
-    })
-
-    await newContact.save()
+    await transporter.sendMail(mailOptions)
+    console.log('✅ Email sent successfully')
 
     res.status(201).json({
       success: true,
-      message: `Message sent via ${emailSent ? 'Email' : ''} ${whatsappSent ? (emailSent ? 'and WhatsApp' : 'WhatsApp') : ''}`,
-      emailSent,
-      whatsappSent,
+      message: "Message sent successfully!",
     })
 
   } catch (error) {
+    console.error("Contact error:", error.message)
     res.status(500).json({ success: false, error: error.message })
   }
 })
