@@ -1,178 +1,115 @@
 "use client"
 
-import type React from "react"
-import { motion, useInView } from "framer-motion"
-import { useRef, useState } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Send, Mail, Lock, Sparkles } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
+import { toast } from "@/hooks/use-toast"
 
-export function Contact() {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: "-100px" })
-
+export default function Contact() {
   const [formData, setFormData] = useState({
+    name: "",
     email: "",
-    password: "",
     message: "",
   })
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setLoading(true)
 
     try {
-      const res = await fetch("http://localhost:5000/api/contact/submit", {
+      const response = await fetch("/api/contact", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(formData),
       })
 
-      const data = await res.json()
+      const data = await response.json()
 
-      if (data.success) {
-        alert("Details saved successfully ✅")
-        setFormData({ email: "", password: "", message: "" })
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Your message has been sent to my email!",
+        })
+        setFormData({ name: "", email: "", message: "" })
       } else {
-        alert("Failed to save details ❌")
+        toast({
+          title: "Error",
+          description: data.error || "Failed to send message",
+          variant: "destructive",
+        })
       }
     } catch (error) {
-      alert("Server error ❌")
+      toast({
+        title: "Error",
+        description: "An error occurred while sending your message",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <section id="contact" className="py-20 px-4 relative overflow-hidden">
-      {/* Floating particles – unchanged */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-2 h-2 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{ scale: [0, 1, 0], opacity: [0, 1, 0] }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-            }}
-          />
-        ))}
-      </div>
-
-      <div className="container mx-auto max-w-2xl relative z-10">
-        {/* Heading */}
-        <motion.h2
-          ref={ref}
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          className="
-            text-4xl md:text-5xl font-semibold text-center mb-10
-            bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400
-            bg-clip-text text-transparent
-          "
-        >
-          Connect With Me
-        </motion.h2>
-
-        {/* GLASS FORM */}
-        <form
-          onSubmit={handleSubmit}
-          className="
-            p-10 rounded-[2rem]
-            bg-white/10
-            backdrop-blur-3xl
-            border border-white/20
-            shadow-[0_30px_60px_rgba(0,0,0,0.4)]
-            space-y-6
-          "
-        >
-          {/* Email */}
+    <section id="contact" className="min-h-screen flex items-center justify-center py-12 px-4">
+      <div className="w-full max-w-md">
+        <h2 className="text-3xl font-bold mb-6">Contact Me</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="flex gap-2 items-center text-slate-200 text-sm mb-2">
-              <Mail className="w-4 h-4 text-purple-300" /> Email
+            <label htmlFor="name" className="block text-sm font-medium mb-2">
+              Name
             </label>
             <Input
+              id="name"
+              name="name"
+              type="text"
+              placeholder="Your name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium mb-2">
+              Email
+            </label>
+            <Input
+              id="email"
+              name="email"
               type="email"
+              placeholder="your@email.com"
               value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
+              onChange={handleChange}
               required
-              className="
-                bg-transparent
-                border border-white/25
-                text-slate-100
-                placeholder:text-slate-400
-                rounded-full
-                backdrop-blur-xl
-                focus:ring-2 focus:ring-purple-400/40
-              "
             />
           </div>
-
-          {/* Password */}
           <div>
-            <label className="flex gap-2 items-center text-slate-200 text-sm mb-2">
-              <Lock className="w-4 h-4 text-pink-300" /> Password
+            <label htmlFor="message" className="block text-sm font-medium mb-2">
+              Message
             </label>
-            <Input
-              type="password"
-              value={formData.password}
-              onChange={(e) =>
-                setFormData({ ...formData, password: e.target.value })
-              }
-              required
-              className="
-                bg-transparent
-                border border-white/25
-                text-slate-100
-                placeholder:text-slate-400
-                rounded-full
-                backdrop-blur-xl
-                focus:ring-2 focus:ring-pink-400/40
-              "
-            />
-          </div>
-
-          {/* Message */}
-          <div>
-            <label className="flex gap-2 items-center text-slate-200 text-sm mb-2">
-              <Sparkles className="w-4 h-4 text-blue-300" /> Message
-            </label>
-            <textarea
+            <Textarea
+              id="message"
+              name="message"
+              placeholder="Your message here..."
               value={formData.message}
-              onChange={(e) =>
-                setFormData({ ...formData, message: e.target.value })
-              }
+              onChange={handleChange}
+              rows={5}
               required
-              className="
-                w-full min-h-[140px]
-                bg-transparent
-                border border-white/25
-                text-slate-100
-                placeholder:text-slate-400
-                rounded-2xl px-4 py-3
-                backdrop-blur-xl
-                focus:outline-none focus:ring-2 focus:ring-blue-400/40
-              "
             />
           </div>
-
-          {/* Button */}
-          <Button
-            type="submit"
-            className="
-              w-full py-6 text-lg
-              bg-gradient-to-r from-purple-500/60 via-pink-500/60 to-blue-500/60
-              backdrop-blur-xl
-              rounded-full
-              hover:scale-[1.03]
-              transition
-            "
-          >
-            <Send className="mr-2" /> Send Message
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Sending..." : "Send Message"}
           </Button>
         </form>
       </div>

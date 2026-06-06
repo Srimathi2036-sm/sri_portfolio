@@ -1,3 +1,4 @@
+import "dotenv/config"
 import express from "express"
 import cors from "cors"
 import connectDB from "./config/db.js"
@@ -5,25 +6,39 @@ import contactRoutes from "./routes/contactRoutes.js"
 
 const app = express()
 
-// 🔥 REQUIRED MIDDLEWARE
-app.use(express.json())   // <-- THIS WAS MISSING
+// Middleware
+app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-
-connectDB()
-
 app.use(cors({
-  origin: "http://localhost:3000",
+  origin: ["http://localhost:3000", "http://localhost:3001"],
   methods: ["GET", "POST"],
   credentials: true
 }))
 
+// Routes
 app.use("/api/contact", contactRoutes)
 
 app.get("/", (req, res) => {
-  res.send("API is running 🚀")
+  res.send("API is running")
 })
 
 const PORT = 5000
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
-})
+
+const startServer = async () => {
+  try {
+    console.log("Connecting to MongoDB...")
+    await connectDB()
+    console.log("MongoDB Connected")
+
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`)
+      console.log(`EMAIL_USER: ${process.env.EMAIL_USER || "NOT SET"}`)
+    })
+  } catch (error) {
+    console.error("MongoDB Connection Error:", error.message)
+    process.exit(1)
+  }
+}
+
+startServer()
+

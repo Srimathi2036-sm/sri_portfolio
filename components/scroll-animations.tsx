@@ -71,7 +71,7 @@ export function ScrollAnimations() {
   }, [])
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-[1] overflow-hidden">
+    <div className="fixed inset-0 pointer-events-none z-1 overflow-hidden">
       <AnimatePresence>
         {particles.map((p) => (
           <motion.div
